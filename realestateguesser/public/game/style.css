@@ -1,0 +1,22 @@
+#usernamePrompt
+{
+    width:40%;
+    height:40%;
+    background-color: lightgray;
+    position: absolute;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+#joinStatus
+{
+    color:red;
+}
+
+.playerImg
+{
+    
+    background-color: #b0b0b0;
+}

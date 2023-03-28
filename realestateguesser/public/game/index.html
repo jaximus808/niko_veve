@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gmae</title> 
+    <script src="./socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="game.js"></script>
+</head>
+<body>
+    <h1>Real Estate Guesser</h1>
+    <h3>Players:</h3>
+    <div id="playerDisplay">
+
+    </div>
+
+    <div id="usernamePrompt"> 
+        <h2>Enter a Username</h2>
+        <input id="usernameInput">
+        <p id="joinStatus"></p>
+        <button onclick="joinGame()">join!</button>
+    </div>
+
+    <!-- <script src="./socket.io-client-4.6.0/"></script> -->
+    <!-- <script type="module" src="game.js"></script> -->
+</body>
+</html>
