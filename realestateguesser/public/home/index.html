@@ -21,7 +21,7 @@
         <h2>Join a Private Game:</h2>
         <label>game code: </label>
         <input id="gameCodeInput">
-        <p></p>
+        <p id="statusJoin"></p>
         <button onclick="joinGameWithCode()">Join</button>
 
 
@@ -72,6 +72,18 @@
                     headers: {
                         'Content-Type': 'application/json',
                         },
+                }).then(res => res.json())
+                .then(data =>
+                {
+                    console.log(data)
+                    if(!data.error)
+                    {
+                        window.location.href = `/game/${idCode}`
+                    }
+                    else
+                    {
+                        document.getElementById("statusJoin").innerHTML = data.msg
+                    }
                 })
             }
 

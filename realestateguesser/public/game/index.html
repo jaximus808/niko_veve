@@ -7,15 +7,36 @@
     <title>Test Gmae</title> 
     <script src="./socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="game.js"></script>
+    
 </head>
 <body>
     <h1>Real Estate Guesser</h1>
+    <p id="gameState"></p>
+    <p id="joinCode"></p>
+    <p id="inviteLink"></p>
     <h3>Players:</h3>
     <div id="playerDisplay">
 
     </div>
-
+    <div id="AdminPanel">
+        <div style="text-align: center;">Admin Control</div>
+        <button class="startButton"onclick="startGame()">Start Game</button>
+    </div>
+    <div id="chatArea" style="width: 25%; height: 30%; background-color: rgba(186, 186, 186,0.4); position: absolute; bottom:0;right: 0;z-index: 5;">
+        <div id="chatContianer" style="background-color: rgba(92, 92, 92,0.4); width:98%; height:73%; margin-left: 1% ;margin-top: 1% ;"  id="chatContianer"></div>
+        <div id="inputArea" style="background-color:rgba(92, 92, 92,0.4) ;height:20%; width:97%; margin-left:1%;margin-top: 2%;">
+          <label  novalidate for="inp" class="inp" >
+            <input id="inputMsg"  class="inputMessage" style="margin-top:-2%;margin-left: 1%;"type="text" id="inp" placeholder="message" pattern=".{6,}" required>
+            <svg margin-left="1%"width="100%" height="18px" viewBox="0 0 280 18" class="border">
+              <path d="M0,12 L223.166144,12 C217.241379,12 217.899687,12 225.141066,12 C236.003135,12 241.9279,12 249.827586,12 C257.727273,12 264.639498,12 274.514107,12 C281.097179,12 281.755486,12 276.489028,12"></path>
+            </svg>
+            
+          </label>
+          
+        <!-- <button onclick="SendMessageDOM()" class="btn">Send</button> -->
+        </div>
+      </div>
+    <script src="game.js"></script>
     <div id="usernamePrompt"> 
         <h2>Enter a Username</h2>
         <input id="usernameInput">

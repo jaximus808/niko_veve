@@ -17,6 +17,111 @@
 
 .playerImg
 {
-    
+    width: 20%;
     background-color: #b0b0b0;
 }
+.linksDisplay
+{
+    color:blue
+}
+
+#AdminPanel
+{
+    position:absolute;
+    right: 0;
+    top:0;
+    width: 20%;
+    height:50%; 
+    background-color: lightblue;
+    display: none;
+}
+
+.startButton
+{
+    position:relative;
+    left:50%;
+    top:5%;
+    transform: translate(-50%,20%);
+}
+
+
+#chatContianer
+{
+    overflow: auto;
+    transform: rotate(180deg);
+    direction: rtl;
+}
+
+#chatContianer .message
+{
+    transform: rotate(180deg);
+    direction: ltr;
+    margin: 2%;
+    word-wrap: break-word;
+    overflow: none;
+}
+#chatContianer .serverMessage
+{
+  color:purple;
+    transform: rotate(180deg);
+    direction: ltr;
+    margin: 2%;
+    word-wrap: break-word;
+    overflow: none;
+}
+
+.inp {
+    position: relative;
+    top:15px;
+    left: 0%;
+    margin: auto;
+    width: 5%;
+    height: 53px;
+  }
+  .inp .border {
+    position: absolute;
+    left: 0;
+    bottom: -50%;
+    height: 20px;
+    fill: none;
+  }
+  .inp .border path {
+    stroke: #c8ccd4;
+    stroke-width: 2;
+  }
+  .inp .border path d {
+    transition: all 0.2s ease;
+  }
+  
+  
+  .inp input {
+    -webkit-appearance: none;
+    width: 100%;
+    border: 0;
+    font-family: inherit;
+    padding: 0;
+    height: 48px;
+    font-size: 16px;
+    font-weight: 500;
+    background: none;
+    border-radius: 0;
+    color: #223254;
+    transition: all 0.15s ease;
+  }
+  .inp input:focus {
+    outline: none;
+  }
+  .inp input:focus + .border path {
+    stroke: #07f;
+  }
+  .inp input:valid + .border path {
+    animation: elasticInput 0.8s ease forwards;
+  }
+  .inp input:valid + .border + .check {
+    transform: translate(0, 0) scale(1);
+  }
+  ::placeholder {
+    color: white;
+  }
+  
+  

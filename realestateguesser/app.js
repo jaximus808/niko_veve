@@ -54,10 +54,10 @@ app.post("/createRoom", (req, res) =>
 })
 
 
-app.post("/joinGameRoom", (req, res)=>
+app.post("/joinGame", (req, res)=>
 {
     //const username = req.body.username; 
-    const roomCode = req.body.roomCode; 
+    const roomCode = req.body.roomId; 
 
     // if(!username || username.replace(/\s/g, '') == '')
     // {
@@ -67,15 +67,19 @@ app.post("/joinGameRoom", (req, res)=>
     //private room
     if(roomCode)
     {
-        if(!RoomManager[roomCode]) 
+        if(!roomManager.rooms[roomCode]) 
         {
-            res.send({error:true, error:"room does not exist"})
+            res.send({error:true, msg:"room does not exist"})
             return
+        }
+        else 
+        {
+            res.send({error:false, msg:"JOIN!"})
         }
     }
     else 
     {
-        //do later
+        res.send({error:true, msg:"No error code submitted"})
     }
 
 })
