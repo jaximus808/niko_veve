@@ -10,19 +10,23 @@
     
 </head>
 <body>
+  
     <h1>Real Estate Guesser</h1>
-    <p id="gameState"></p>
-    <p id="joinCode"></p>
-    <p id="inviteLink"></p>
+    <div class="stats">
+      <p id="gameState"></p>
+      <p id="joinCode"></p>
+      <p id="inviteLink"></p>
+      <div id="settings">
+        <h3>Settings</h3>
+        <p id="guessTimeDisplay"></p>
+        <p id="maxRoundsDisplay"></p>
+        <p id="showLocationDisplay"></p>
+        <p></p>
+      </div>
+    </div>
     <h3>Players:</h3>
     <div id="playerDisplay">
-
-    </div>
-    <div id="AdminPanel">
-        <div style="text-align: center;">Admin Control</div>
-        <button class="startButton"onclick="startGame()">Start Game</button>
-    </div>
-    <div id="chatArea" style="width: 25%; height: 30%; background-color: rgba(186, 186, 186,0.4); position: absolute; bottom:0;right: 0;z-index: 5;">
+      <div id="chatArea" style="width: 25%; height: 30%; background-color: rgba(186, 186, 186,0.4); position: absolute; bottom:0;right: 0;z-index: 5;">
         <div id="chatContianer" style="background-color: rgba(92, 92, 92,0.4); width:98%; height:73%; margin-left: 1% ;margin-top: 1% ;"  id="chatContianer"></div>
         <div id="inputArea" style="background-color:rgba(92, 92, 92,0.4) ;height:20%; width:97%; margin-left:1%;margin-top: 2%;">
           <label  novalidate for="inp" class="inp" >
@@ -36,7 +40,66 @@
         <!-- <button onclick="SendMessageDOM()" class="btn">Send</button> -->
         </div>
       </div>
+    </div>
+
+    
+
     <script src="game.js"></script>
+    <div id="estatePrompterContainer">
+      <img style="display: none" src="" class="promptImg" id="promptImg0">
+      <img style="display: none" class="promptImg"id="promptImg1">
+      <img style="display: none" class="promptImg"id="promptImg2">
+      <div>
+        <button onclick="incrementImageLeft()" class="promptButtons" disabled="true" id="leftImageSwap"><</button>
+        <button onclick="incrementImageRight()" class="promptButtons" id="rightImageSwap">></button>
+      </div>
+      <div id="priceAnswerContainer">
+        <h3>Correct Price: </h3>
+        <div id="displayAnswerPriceID"></div>
+      
+      </div>
+      <h3>Description:</h3>
+      <div id="promptDesc"></div>
+      <div id="promptLocationContainer">
+        <h3>Location:</h3>
+        <div id="locationDisplay"></div>
+      </div>
+    </div>
+
+    <div id="guessArea">
+      <div>Guess:</div>
+      <input id="guessEstateInput">
+    </div>
+
+
+    <div id="roundStatus">
+      <h3>Round: <span id="roundNumDisplay">0</span></h3>
+      <div id="currentGuessTime">Time to Guess: waiting</div>
+    </div>
+
+    <div id="AdminPanel">
+        <div style="text-align: center;font-size: 2vw;">Admin Control</div>
+
+        <div id="adminContainer">
+
+          <div>Guess Time Limit: <span id="timeLimitValueAdmin"></span>s </div>
+          <input style="width:80%" oninput="UpdateTimeLimitAdmin()" type="range" min="15" max="300" step="1" value="90" id="timeLimitRange" >
+
+          <div>Max Rounds: <span id="maxRoundValueAdmin"></span> </div>
+          <input style="width:80%" oninput="UpdateMaxRoundsAdmin()" type="range"  max="20" min="1" value="10" id="maxRoundsInput">
+          <div>Show Location</div>
+          <input type="checkbox" value="false" id="showLocationInput">
+          <br></br>
+          <button class="adminButtons" onclick="changeSettings()">Change Settings</button>
+          <button class="adminButtons" onclick="startGame()">Start Game</button>
+        </div>
+
+
+    </div>
+
+
+
+   
     <div id="usernamePrompt"> 
         <h2>Enter a Username</h2>
         <input id="usernameInput">

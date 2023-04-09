@@ -3,10 +3,18 @@ const socket = io();
 
 var localUsername 
 
+var currentGuessTime; 
+
+var timerInteveralOb; 
+
 var gameManager;
 
+var imagePrompt = 0; 
+
+let imageDisplayLens = 3; 
 
 const msgInput = document.getElementById("inputMsg")
+let imageIdDisplay = 0; 
 
 msgInput.addEventListener("keydown", function onEvent(event)
 {
@@ -51,7 +59,7 @@ function GameManager(players, timer, round )
         pointsDisplay.setAttribute("id",`points${id}`)
 
 
-        playerDiv.setAttribute("id",id); 
+        playerDiv.setAttribute("id","player-"+id); 
 
         playerDiv.appendChild(namePlayer)
 
@@ -65,6 +73,11 @@ function GameManager(players, timer, round )
         this.displayPlayers(key, value.name, value.points,value.admin);
     }
 
+    this.updatePlayerPoints = (id, points) =>
+    {
+        players[id].points = points
+        document.getElementById("points"+id).innerHTML = `Points: ${points}`
+    }
 
 
     this.addPlayer = (id, playerData) =>
@@ -97,6 +110,13 @@ function joinGame()
     socket.emit("joinGame", localUsername)
 }
 
+function realEstatePrompt(data) 
+{
+    //document.getElementById("estatePrompterContainer").display = "inline"
+    
+    
+}
+
 function RenderMessageDOM(data)
 {
     console.log(data)
@@ -114,17 +134,144 @@ function RenderMessageDOM(data)
     chatContainer.prepend(chatP);
 }
 
+function UpdateTimeLimitAdmin()
+{
+    document.getElementById("timeLimitValueAdmin").innerHTML = document.getElementById("timeLimitRange").value
+}
+
+function UpdateMaxRoundsAdmin()
+{
+    document.getElementById("maxRoundValueAdmin").innerHTML = document.getElementById("maxRoundsInput").value
+}
+
+function changeSettings()
+{
+    timeLimitUpdate = document.getElementById("timeLimitRange").value; 
+    maxRounds = document.getElementById("maxRoundsInput").value; 
+    showLocation = document.getElementById("showLocationInput").checked; 
+    socket.emit("changeSettings", {
+        guessTime: timeLimitUpdate,
+        maxRounds: maxRounds,
+        showLocation: showLocation
+    })
+}
+
+
+//do guess input logic 
+function startGame()
+{
+    socket.emit("StartGame");
+}
+
+function startTimer(setTimer,guessing)
+{
+    clearInterval(timerInteveralOb)
+    console.log(setTimer)
+    currentGuessTime = setTimer + 1; 
+    updateTime(guessing)
+    timerInteveralOb = setInterval(()=>
+    {
+        updateTime(guessing)
+    }, 1000)
+    //do later
+}
+
+function updateTime(guessing)
+{
+    if(currentGuessTime == 0) return; 
+    currentGuessTime -= 1; 
+    document.getElementById("currentGuessTime").innerHTML = `${(guessing) ? 
+    "Time to Guess:":"Next Round Starts in: "} ${currentGuessTime}`
+}
+
+function setImage(imgValue)
+{
+    if(imgValue >= imageDisplayLens || imgValue < 0) return; 
+    document.getElementById(`promptImg${imageIdDisplay}`).style.display ="none"
+    imageIdDisplay = imgValue
+    document.getElementById(`promptImg${imageIdDisplay}`).style.display ="inline"
+    console.log(imageIdDisplay)
+    if(imageIdDisplay == 0 )
+    {
+        document.getElementById("leftImageSwap").disabled = true;
+        document.getElementById("rightImageSwap").disabled = false;
+    }
+    else if(imageIdDisplay == imageDisplayLens-1)
+    {
+        document.getElementById("leftImageSwap").disabled = false;
+        document.getElementById("rightImageSwap").disabled = true;
+    }
+    else 
+    {
+
+        document.getElementById("leftImageSwap").disabled = false;
+        document.getElementById("rightImageSwap").disabled = false;
+    }
+}
+
+function incrementImageLeft()
+{
+    setImage(imageIdDisplay-1)
+}
+
+
+function incrementImageRight()
+{
+    setImage(imageIdDisplay+1)
+}
+
+
+socket.on("playerRoundUpdateEnd", (data) =>
+{
+    for(let i = 0; i < Object.keys(data.players).length; i++)
+    {
+        let _playerId = Object.keys(data.players)[i]
+        gameManager.updatePlayerPoints(_playerId, data.players[_playerId].points)
+    }
+    console.log(data)
+    document.getElementById("priceAnswerContainer").style.display = "inline"
+    document.getElementById("displayAnswerPriceID").innerHTML = `$${data.answer}`
+
+    startTimer(data.bufferTimer, false); 
+})
+
+socket.on("roundStart", (data) =>
+{
+    setImage(0)
+    for(let i = 0; i < data.images.length; i++)
+    {
+        document.getElementById(`promptImg${i}`).setAttribute("src", data.images[i]); 
+    }
+    document.getElementById("promptDesc").innerHTML = data.description; 
+
+    if(data.location != null)
+    {
+        document.getElementById("locationDisplay").innerHTML = data.location;
+    }
+
+    startTimer(data.guessTimer,true); 
+
+    document.getElementById("roundNumDisplay").innerHTML = data.round
+
+    document.getElementById("estatePrompterContainer").style.display = "inline"
+    
+    document.getElementById("guessArea").style.display = "inline"
+    document.getElementById("priceAnswerContainer").style.display = "none"
+    document.getElementById("displayAnswerPriceID").innerHTML = ""
+})
+
+socket.on("resetPoints", ()=>
+{
+    for(let i = 0; i < Object.keys(gameManager.players).length; i++)
+    {
+        let _playerId = Object.keys(gameManager.players)[i]
+        gameManager.updatePlayerPoints(_playerId,0)
+    }
+})
+
 socket.on("chatMessage",(data) =>
 {
-    console.log(data)
-    if(data.server)
-    {
-        return; 
-    }
-    RenderMessageDOM(data)
-
-    
-    
+    RenderMessageDOM(data)    
 })
 
 socket.on("connected", (admin)=>
@@ -144,22 +291,49 @@ socket.on("returnHome", ()=>
 
 socket.on("InitGameInfo", (res) =>
 {
+    
     var data = res
     console.log(data)
-    gameManager = new GameManager(data.players, data.timer, data.round )
+    gameManager = new GameManager(data.players, data.timer, data.round ) 
+
+    document.getElementById("guessTimeDisplay").innerHTML = `Guess Time: ${data.settings.guessTime/1000}`
+
+    document.getElementById("maxRoundsDisplay").innerHTML = `Maximum Rounds: ${data.settings.maxRounds}`
+
+    document.getElementById("showLocationDisplay").innerHTML = `Show Location: ${(data.settings.showLocation) ? "True": "False"}`
+
+    document.getElementById("timeLimitValueAdmin").innerHTML = data.settings.guessTime/1000
+    document.getElementById("timeLimitRange").value = data.settings.guessTime/1000
+    document.getElementById("maxRoundValueAdmin").innerHTML = data.settings.maxRounds
+    document.getElementById("maxRoundsInput").value = data.settings.maxRounds
+    console.log(document.getElementById("showLocationInput").value)
+    document.getElementById("showLocationInput").checked = data.settings.showLocation
+    document.getElementById("promptLocationContainer").display = (data.settings.showLocation) ? "inline":"none"
     document.getElementById("gameState").innerHTML = `${(data.gameState == 0 ) ? "Waiting for game to start" : "In-Game"}`
 })
 
-socket.on("playerJoin", (id, username, admin) =>
+socket.on("playerJoin", (id, username, admin,settings) =>
 {
-    console.log(id)
-    console.log(admin)
     gameManager.addPlayer(id, {name:username,points: 0, admin:admin})
+
+    document.getElementById("timeLimitValueAdmin").innerHTML = `${settings.guessTime/1000}s`;
+    document.getElementById("timeLimitRange").value = timeLimitRange; 
 })
 
 socket.on("disconnectPlayer", (id) =>
 {
     gameManager.removePlayer(id); 
+})
+
+socket.on("settingUpdate", (settings) =>
+{
+    document.getElementById("guessTimeDisplay").innerHTML = `Guess Time: ${settings.guessTime/1000}`
+
+    document.getElementById("maxRoundsDisplay").innerHTML = `Maximum Rounds: ${settings.maxRounds}`
+
+
+    document.getElementById("promptLocationContainer").display = (settings.showLocation) ? "inline":"none"
+    document.getElementById("showLocationDisplay").innerHTML = `Show Location: ${(settings.showLocation) ? "True": "False"}`
 })
 
 socket.on("adminUpdate", (updateId)=>{
