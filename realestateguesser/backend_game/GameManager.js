@@ -32,6 +32,8 @@ export default function (roomId )
 
     this.estateDB = new sqldb()
 
+    this.timerOb; 
+
     //might need to handle currency
 
     this.targetEstate = {
@@ -88,7 +90,7 @@ export default function (roomId )
     {
         let winners = this.getWinners();
         io.to("room-"+this.roomId).emit("gameEnd", {
-            winners: winners
+            winners: winners,
         })
     }
 
@@ -104,11 +106,16 @@ export default function (roomId )
             bufferTimer: this.bufferTimeBetween/1000
             
         })
-        serverMessage(io, `Guessing time is over! The actual price is $${this.targetEstate.price} USD! `)
+        serverMessage(io, `Guessing is over! The actual price is $${this.targetEstate.price} USD! `)
+        console.log(this.settings.maxRounds)
         if(this.round == this.settings.maxRounds) 
         {
+            console.log("GAME OVER")
             
-            setTimeout(this.endGame,this.bufferTimeBetween)
+            setTimeout(()=>
+            {
+                this.endGame(io)
+            },this.bufferTimeBetween)
         }
         else 
         {
@@ -139,7 +146,7 @@ export default function (roomId )
         })
         serverMessage(io, `Round ${this.round} just started! Give your best guess of the real estate's value before time is up!`)
         //do this or smth
-        setTimeout(()=>
+        this.timerOb = setTimeout(()=>
         {
             this.endRound(io)
         }, this.settings.guessTime); 
@@ -148,16 +155,23 @@ export default function (roomId )
     this.calculatePoints = () =>
     {
         //how off they can be for points
-        let rangeError = this.targetEstate.price*this.settings.percErr; 
+        let rangeError = this.targetEstate.price*this.targetEstate.percErr; 
         for(let i = 0; i < Object.keys(this.players).length; i++)
         {
             let pGuess = this.players[Object.keys(this.players)[i]].guess 
 
+            console.log(pGuess)
             //no points awarded
             if(pGuess == -1) continue; 
 
-            let pts = 100 * (rangeError- Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess )))/rangeError; 
+            //thid is returrning null idk how
+            console.log((rangeError- Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess ))))
+            console.log("EMPW")
+            console.log( Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess )))
+            console.log(rangeError)
+            let pts = Math.round(100 * (rangeError- Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess )))/rangeError); 
 
+            //or maybe here
             this.players[Object.keys(this.players)[i]].points += pts;  
         }
 
@@ -165,11 +179,16 @@ export default function (roomId )
 
     }
 
-    this.guessPrice = (socketId, price) =>
+    this.guessPrice = (socketId, price, io) =>
     {
+        console.log("EHLLOW?")
         if(isNaN(price)) return; 
         if(price < 0 ) return; 
+        if(this.players[socketId].guess != -1) return; 
         this.players[socketId].guess = price; 
+        console.log(this.players[socketId].guess)
+        serverMessage(io, `${this.players[socketId].name} thinks the value of property is $${price}`)
+        
 
         //some emit thingy 
     }
@@ -203,10 +222,14 @@ export default function (roomId )
 
     this.changeSettings = (socketid,setSettings) =>
     {
+
+        setSettings.maxRounds = parseInt(setSettings.maxRounds)
+        setSettings.guessTime = parseInt(setSettings.guessTime)
         if(!this.players[socketid].admin) return; 
    
-        if(setSettings.guessTime > 300 || setSettings.guessTime < 15 || setSettings.maxRounds < 1 || setSettings.maxRounds > 10)
+        if(setSettings.guessTime > 300 || setSettings.guessTime < 15 || setSettings.maxRounds < 1 || setSettings.maxRounds > 20)
 
+        console.log(setSettings)
         this.settings.maxRounds = setSettings.maxRounds
         this.settings.showLocation = setSettings.showLocation
         this.settings.guessTime = this.milis(setSettings.guessTime)

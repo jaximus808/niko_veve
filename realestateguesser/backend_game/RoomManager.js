@@ -105,7 +105,7 @@ export default function (io)
 
         socket.on("guess", (price) =>
         {
-            room.guessPrice(socket.id, price);
+            room.guessPrice(socket.id, price, this.io);
         })
 
         socket.on("changeSettings", (settingsUpdate) =>
@@ -125,7 +125,7 @@ export default function (io)
         socket.on("disconnect", () =>
         {
             if(!room.players[socket.id]) return;
-            serverMessage(`${room.players[socket.id]} has just left!`)
+            serverMessage(`${room.players[socket.id].name} has just left!`)
             var needUpdate = room.removePlayer(socket.id, socket)
             socket.to(socketRoom).emit("disconnectPlayer", socket.id)
             if(needUpdate)

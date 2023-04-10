@@ -13,16 +13,34 @@ var imagePrompt = 0;
 
 let imageDisplayLens = 3; 
 
-const msgInput = document.getElementById("inputMsg")
 let imageIdDisplay = 0; 
 
-msgInput.addEventListener("keydown", function onEvent(event)
+
+
+window.onload = (event) =>
 {
-    if(event.key == "Enter")
+    const msgInput = document.getElementById("inputMsg")
+
+    const guessInput = document.getElementById("guessEstateInput")
+
+    msgInput.addEventListener("keydown", function onEvent(event)
     {
-        sendMsg();
-    }
-})
+        if(event.key == "Enter")
+        {
+            sendMsg();
+        }
+    })
+
+    guessInput.addEventListener("keydown", function onEvent(event)
+    {
+        if(event.key == "Enter")
+        {
+            sendGuess();
+        }
+    })
+    
+} 
+
 
 function sendMsg()
 {
@@ -68,6 +86,42 @@ function GameManager(players, timer, round )
         this.playerDisplayEl.appendChild(playerDiv);
 
     }
+
+    this.DisplayRankPlayers = (winners ) =>
+    {
+        document.getElementById("winNameDisplay").innerHTML = ""; 
+        document.getElementById("rankings").innerHTML = ""; 
+
+        const rankingPlayers = Object.keys(this.players);
+        rankingPlayers.sort((a,b) =>
+        {
+            return this.players[a].points - this.players[b].points 
+        })
+
+        for(let i = 0; i < winners.length; i++)
+        {
+            document.getElementById("winNameDisplay").innerHTML = document.getElementById("winNameDisplay").innerHTML +`<h3>${winners[i].name}</h3>
+            <p>Points: ${winners[i].points}</p>`
+        }
+
+        
+        
+        for(let i = 0; i < rankingPlayers.length; i++)
+        {
+            const displayPlayerLi = document.createElement("li");
+            const displayPlayerDiv = document.createElement("div"); 
+            const displayName = document.createElement("h3");
+            displayName.innerHTML = this.players[rankingPlayers[i]].name; 
+
+            const displayPts = document.createElement("div");
+            displayPts.innerHTML = this.players[rankingPlayers[i]].points;
+            displayPlayerDiv.appendChild(displayName)
+            displayPlayerDiv.appendChild(displayPts)
+            displayPlayerLi.appendChild(displayPlayerLi)
+        }
+        document.getElementById("winContainer").display = "inline"
+    }
+
     for(const [key, value] of Object.entries(this.players))
     {
         this.displayPlayers(key, value.name, value.points,value.admin);
@@ -220,6 +274,19 @@ function incrementImageRight()
     setImage(imageIdDisplay+1)
 }
 
+function sendGuess()
+{
+    let guessPrice = parseInt(document.getElementById("guessEstateInput").value.trim())
+
+    if(isNaN(guessPrice)) return; 
+
+    document.getElementById("guessEstateInput").value = "";
+    socket.emit("guess",guessPrice)
+    document.getElementById('guessArea').style.display = "none"; 
+
+}
+
+
 
 socket.on("playerRoundUpdateEnd", (data) =>
 {
@@ -232,6 +299,7 @@ socket.on("playerRoundUpdateEnd", (data) =>
     document.getElementById("priceAnswerContainer").style.display = "inline"
     document.getElementById("displayAnswerPriceID").innerHTML = `$${data.answer}`
 
+    document.getElementById('guessArea').style.display = "none"; 
     startTimer(data.bufferTimer, false); 
 })
 
@@ -319,6 +387,16 @@ socket.on("playerJoin", (id, username, admin,settings) =>
     document.getElementById("timeLimitValueAdmin").innerHTML = `${settings.guessTime/1000}s`;
     document.getElementById("timeLimitRange").value = timeLimitRange; 
 })
+
+
+socket.on("gameEnd", (winners)=>
+{
+    document.getElementById("estatePrompterContainer").style.display = "none"; 
+    gameManager.DisplayRankPlayers(winners); 
+
+    
+})
+
 
 socket.on("disconnectPlayer", (id) =>
 {
