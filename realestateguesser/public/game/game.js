@@ -15,6 +15,7 @@ let imageDisplayLens = 3;
 
 let imageIdDisplay = 0; 
 
+let maxPlayers = 0; 
 
 
 window.onload = (event) =>
@@ -87,37 +88,44 @@ function GameManager(players, timer, round )
 
     }
 
-    this.DisplayRankPlayers = (winners ) =>
+    this.DisplayRankPlayers = (winnerArray ) =>
     {
         document.getElementById("winNameDisplay").innerHTML = ""; 
         document.getElementById("rankings").innerHTML = ""; 
 
         const rankingPlayers = Object.keys(this.players);
+        console.log("878t878t97")
         rankingPlayers.sort((a,b) =>
         {
-            return this.players[a].points - this.players[b].points 
+            return  this.players[b].points - this.players[a].points 
         })
-
-        for(let i = 0; i < winners.length; i++)
+        console.log(rankingPlayers)
+        console.log("MEW")
+        console.log(winnerArray)
+        console.log(winnerArray.length)
+        let additionString = ""
+        for(let i = 0; i < winnerArray.length; i++)
         {
-            document.getElementById("winNameDisplay").innerHTML = document.getElementById("winNameDisplay").innerHTML +`<h3>${winners[i].name}</h3>
-            <p>Points: ${winners[i].points}</p>`
+            additionString +=`<h3>${this.players[winnerArray[i]].name}</h3><p>Points: ${this.players[winnerArray[i]].points}</p>`
         }
 
-        
+        console.log(additionString)
+        console.log("dpgpdpgpf")
+        document.getElementById("winNameDisplay").innerHTML = additionString;
         
         for(let i = 0; i < rankingPlayers.length; i++)
         {
-            const displayPlayerLi = document.createElement("li");
+            const displayPlayerLi = document.createElement("div");
             const displayPlayerDiv = document.createElement("div"); 
             const displayName = document.createElement("h3");
-            displayName.innerHTML = this.players[rankingPlayers[i]].name; 
+            displayName.innerHTML = `${i+1}. ${this.players[rankingPlayers[i]].name}`; 
 
             const displayPts = document.createElement("div");
             displayPts.innerHTML = this.players[rankingPlayers[i]].points;
             displayPlayerDiv.appendChild(displayName)
             displayPlayerDiv.appendChild(displayPts)
-            displayPlayerLi.appendChild(displayPlayerLi)
+            displayPlayerLi.appendChild(displayPlayerDiv)
+            document.getElementById("rankings").appendChild(displayPlayerLi)
         }
         document.getElementById("winContainer").display = "inline"
     }
@@ -138,12 +146,16 @@ function GameManager(players, timer, round )
     {
         this.players[id] = playerData 
         this.displayPlayers(id, playerData.name, playerData.points,playerData.admin)
+
+        document.getElementById("playerUpdateCount").innerHTML = `Players: (${Object.keys(this.players).length}/${maxPlayers})`
     }
 
     this.removePlayer = (id) =>
     {
         delete this.players[id] 
-        document.getElementById(id).remove();
+        document.getElementById("player-"+id).remove();
+
+        document.getElementById("playerUpdateCount").innerHTML = `Players: (${Object.keys(this.players).length}/${maxPlayers})`
     }
 
 
@@ -160,7 +172,6 @@ function joinGame()
         return; 
     }
 
-    document.getElementById("usernamePrompt").style.display = "none"
     socket.emit("joinGame", localUsername)
 }
 
@@ -215,6 +226,8 @@ function changeSettings()
 function startGame()
 {
     socket.emit("StartGame");
+    document.getElementById("AdminPanel").style.display = "none"
+    document.getElementById("winContainer").style.display = "none"
 }
 
 function startTimer(setTimer,guessing)
@@ -323,6 +336,8 @@ socket.on("roundStart", (data) =>
 
     document.getElementById("estatePrompterContainer").style.display = "inline"
     
+    document.getElementById("stats").style.display = "none"; 
+
     document.getElementById("guessArea").style.display = "inline"
     document.getElementById("priceAnswerContainer").style.display = "none"
     document.getElementById("displayAnswerPriceID").innerHTML = ""
@@ -342,8 +357,15 @@ socket.on("chatMessage",(data) =>
     RenderMessageDOM(data)    
 })
 
+socket.on("fullLobbyConnect", ()=>
+{
+    document.getElementById("joinStatus").innerHTML = "Game is full! Try again later"; 
+})
+
 socket.on("connected", (admin)=>
 {
+    document.getElementById("usernamePrompt").style.display = "none"
+
     if(admin) document.getElementById("AdminPanel").style.display = "inline"
     gameManager.addPlayer(socket.id,{
         name: localUsername,
@@ -361,7 +383,9 @@ socket.on("InitGameInfo", (res) =>
 {
     
     var data = res
-    console.log(data)
+
+    maxPlayers = res.maxPlayers
+
     gameManager = new GameManager(data.players, data.timer, data.round ) 
 
     document.getElementById("guessTimeDisplay").innerHTML = `Guess Time: ${data.settings.guessTime/1000}`
@@ -378,6 +402,9 @@ socket.on("InitGameInfo", (res) =>
     document.getElementById("showLocationInput").checked = data.settings.showLocation
     document.getElementById("promptLocationContainer").display = (data.settings.showLocation) ? "inline":"none"
     document.getElementById("gameState").innerHTML = `${(data.gameState == 0 ) ? "Waiting for game to start" : "In-Game"}`
+
+
+    document.getElementById("playerUpdateCount").innerHTML = `Players: (${Object.keys(gameManager.players).length}/${maxPlayers})`
 })
 
 socket.on("playerJoin", (id, username, admin,settings) =>
@@ -386,21 +413,32 @@ socket.on("playerJoin", (id, username, admin,settings) =>
 
     document.getElementById("timeLimitValueAdmin").innerHTML = `${settings.guessTime/1000}s`;
     document.getElementById("timeLimitRange").value = timeLimitRange; 
+
 })
 
 
-socket.on("gameEnd", (winners)=>
+socket.on("gameEnd", (winnerOb)=>
 {
     document.getElementById("estatePrompterContainer").style.display = "none"; 
-    gameManager.DisplayRankPlayers(winners); 
+    gameManager.DisplayRankPlayers(winnerOb.winners); 
+    document.getElementById("winContainer").style.display = "inline"; 
+
+    document.getElementById("stats").style.display = "inline"; 
 
     
+})
+
+socket.on("showAdminPanel", ()=>
+{
+
+    document.getElementById("AdminPanel").style.display = "inline";
 })
 
 
 socket.on("disconnectPlayer", (id) =>
 {
     gameManager.removePlayer(id); 
+
 })
 
 socket.on("settingUpdate", (settings) =>

@@ -53,6 +53,12 @@ app.post("/createRoom", (req, res) =>
     res.send({error:false, roomId: roomId})
 })
 
+app.get("/joinpublicroom", (req,res) =>
+{
+    const roomId = roomManager.joinPublicRoom()
+
+    res.send({error:false, roomId: roomId})
+})
 
 app.post("/joinGame", (req, res)=>
 {
@@ -84,7 +90,14 @@ app.post("/joinGame", (req, res)=>
 
 })
 
-app.use("/game/:gameid", (req, res, next) =>
+app.use("/privategame/:gameid", (req, res, next) =>
+{
+    
+    next()
+
+}, express.static(path.join(__dirname,'public', 'game')))
+
+app.use("/publicgame/:gameid", (req, res, next) =>
 {
     
     next()
@@ -92,6 +105,7 @@ app.use("/game/:gameid", (req, res, next) =>
 }, express.static(path.join(__dirname,'public', 'game')))
 
 app.use("/",express.static(path.join(__dirname,'public', 'home')));
+app.use("/customgame",express.static(path.join(__dirname,'public', 'customGame')));
 //app.use("/",require("./router/routes.js"));
 
 httpServer.listen(process.env.PORT || 3000, console.log("Server up"));

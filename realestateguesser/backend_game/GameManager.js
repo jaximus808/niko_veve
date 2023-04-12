@@ -1,6 +1,6 @@
 import sqldb from "../mysql/mysql.js"
 
-export default function (roomId )
+export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
 {
 
     const serverMessage = (io, msg) =>
@@ -12,11 +12,23 @@ export default function (roomId )
             admin: false,
             server: true
         })
-    }
+    } 
     this.milis = (seconds) =>
     {
         return seconds*1000;
     }
+
+    this.roomCleanUpTimeout; 
+
+    this.roomDelTimeout = this.milis(30)
+
+    this.serverAdmin = serverAdmin
+
+    this.guessCount = 0; 
+
+    this.maxPlayers = maxPlayers
+
+   
     this.players = {};
 
     this.roomId = roomId; 
@@ -49,7 +61,7 @@ export default function (roomId )
 
     //default server settings
     this.settings = {
-        maxRounds: 10,
+        maxRounds: 5,
         guessTime: this.milis(90),
         showLocation: true
     }
@@ -77,6 +89,7 @@ export default function (roomId )
             if(this.players[id].points > max)
             {
                 winIds = [id];
+                max = this.players[id].points;
             }
             else if(this.players[id].points == max)
             {
@@ -88,15 +101,41 @@ export default function (roomId )
 
     this.endGame =(io)=>
     {
+        if(serverAdmin)
+        {
+            this.gameState = 2; 
+        }
+        else
+        {
+
+            this.gameState = 0; 
+        }
         let winners = this.getWinners();
         io.to("room-"+this.roomId).emit("gameEnd", {
             winners: winners,
         })
+        if(serverAdmin)
+        {
+            serverMessage(io, "The game is over! Click the play again to return back to the home screen!")
+        }
+        else 
+        {
+            //Update the admin to display panel again
+            for(let i = 0; i < Object.keys(this.players).length; i++)
+            {
+                if(this.players[Object.keys(this.players)[i]].admin)
+                {
+                    io.to(Object.keys(this.players)[i]).emit("showAdminPanel");
+                    break; 
+                }
+            }
+            serverMessage(io, "The game is over! Click the play again to return back to the home screen! The admin can also choose to start the game again!")
+        }
     }
 
     this.endRound = (io) => 
     {
-        console.log("MEOW")
+        this.guessCount = 0; 
         this.acceptingGuesses = false; 
         this.calculatePoints();
         io.to("room-"+this.roomId).emit("playerRoundUpdateEnd", 
@@ -181,13 +220,19 @@ export default function (roomId )
 
     this.guessPrice = (socketId, price, io) =>
     {
-        console.log("EHLLOW?")
         if(isNaN(price)) return; 
         if(price < 0 ) return; 
         if(this.players[socketId].guess != -1) return; 
         this.players[socketId].guess = price; 
-        console.log(this.players[socketId].guess)
+        this.guessCount++; 
+
         serverMessage(io, `${this.players[socketId].name} thinks the value of property is $${price}`)
+        if(this.guessCount == Object.keys(this.players).length)
+        {
+            clearInterval(this.timerOb)
+
+            this.endRound(io)
+        }
         
 
         //some emit thingy 
@@ -197,13 +242,7 @@ export default function (roomId )
     this.startGame = async (io) =>
     {
 
-        // console.log(this.estateDB.estateDataCount)
-
-
-        // //kinda scared LOL
-        // return; 
-
-
+        if(this.gameState != 0 ) return; 
         await this.createGuessOb()
         console.log(this.targetEstate)
 
@@ -215,8 +254,8 @@ export default function (roomId )
         }
         //this.createGuessOb()
         io.to("room-"+this.roomId).emit("resetPoints")
-        this.startRound(io); 
-        
+        this.round = 0; 
+        this.startRound(io);    
 
     }
 
@@ -237,13 +276,24 @@ export default function (roomId )
 
     this.addPlayer = (socketId, name ) =>
     {
-        let admin = (Object.keys(this.players).length == 0) ? true : false 
+        if(Object.keys(this.players).length == this.maxPlayers )
+        {
+            return {error: true, msg: "Game is full!"}; 
+        }
+        if(this.gameState == 1)
+        {
+            return {error:true, msg: "Game is already in motion"}
+        }
+        clearInterval(this.roomCleanUpTimeout)
+        let admin = (Object.keys(this.players).length == 0 && !serverAdmin) ? true : false 
         this.players[socketId] = {
             name:name, 
             points:0,  
-            admin:admin, guess:-1
+            admin:admin, 
+            guess:-1
         }; 
         
+        return true; 
     }
     
     this.removePlayer = (socketID, socket) =>
@@ -255,6 +305,10 @@ export default function (roomId )
         {
             this.players[Object.keys(this.players)[0]].admin = true; 
             return true;
+        }
+        else 
+        {
+            this.roomCleanUpTimeout = setTimeout(deleteRoomCallBack, this.roomDelTimeout); 
         }
         return false;
     }

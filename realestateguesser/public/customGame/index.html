@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Game</title>
+</head>
+<body>
+    
+    <h1>Real Estate Guesser</h1>
+
+    <p>Debugging Mode v0.0.1</p>
+
+    <a href="/">back</a>
+
+    <h2>Join a Private Game:</h2>
+        <label>game code: </label>
+        <input id="gameCodeInput">
+        <p id="statusJoin"></p>
+        <button onclick="joinGameWithCode()">Join</button>
+
+
+        <h2>Create a Private Game:</h2>
+        <!-- <label>password:</label>
+        <input id="gameCodeInput">
+        <p></p>
+        <label>max users:</label>
+        <input id="gameCodeInput">
+        <p></p> -->
+        <button onclick="createNewGame()">Create Game</button>
+
+
+        <script >
+
+            async function createNewGame()
+            {
+                //var username = document.getElementById("usernameInput").value; 
+                await fetch("/createRoom", {
+                    method:"POST", 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        },
+                    body: JSON.stringify({
+                    })
+                }).then(res => res.json())
+                .then(data => {
+                    console.log(data)
+                    if(data.error)
+                    {
+                        console.log(data.msg);
+                        return;
+                    }
+                    window.location.href = `/privategame/${data.roomId}`
+                    }
+                )
+            }
+
+            async function joinGameWithCode()
+            {
+                var idCode = document.getElementById("gameCodeInput").value;
+                //var username = document.getElementById("usernameInput").value; 
+                await fetch("/joinGame", {
+                    method:"POST",
+                    body: JSON.stringify({
+                        roomId: idCode,
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        },
+                }).then(res => res.json())
+                .then(data =>
+                {
+                    console.log(data)
+                    if(!data.error)
+                    {
+                        window.location.href = `/privategame/${idCode}`
+                    }
+                    else
+                    {
+                        document.getElementById("statusJoin").innerHTML = data.msg
+                    }
+                })
+            }
+
+        </script>
+</body>
+</html>

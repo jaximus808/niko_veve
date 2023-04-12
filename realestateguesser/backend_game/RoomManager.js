@@ -11,7 +11,9 @@ export default function (io)
 
     };
 
+    this.publicRooms = {
 
+    }
 
     this.io = io
     this.io.on("connection", async  (socket) =>
@@ -39,6 +41,7 @@ export default function (io)
         // }
         const url = socket.request.headers.referer.split("/")
         const roomCode = url[url.length - 2];
+        const privateGame = url[url.length -3] == "privategame"; 
         const socketRoom = "room-"+roomCode
         //console.log(roomCode )
 
@@ -53,14 +56,21 @@ export default function (io)
             })
         }
 
-        if(!this.rooms[roomCode])
+        if(!this.rooms[roomCode] && privateGame)
         {
             socket.emit("returnHome")
             return 
         }
-        await socket.join(socketRoom)
+        else if(!this.publicRooms[roomCode] && !privateGame)
+        {
+            socket.emit("returnHome")
+            return 
+        }
 
-        const room = this.rooms[roomCode];
+
+        await socket.join(socketRoom)
+        
+        const room = (privateGame) ? this.rooms[roomCode] : this.publicRooms[roomCode];
         //console.log(room.players)
         socket.emit("InitGameInfo", 
             {
@@ -68,17 +78,29 @@ export default function (io)
                 gameState: room.gameState,
                 timer: 5,
                 round: 2,
-                settings: room.settings
+                settings: room.settings, 
+                maxPlayers: room.maxPlayers
             }
         )
 
         socket.on("joinGame", async(username) =>
         {
             if(room.players[socket.id]) return; 
-            room.addPlayer(socket.id, username)
+            let goodJoin = room.addPlayer(socket.id, username, io)
+            if(!goodJoin)
+            {
+                //will need to communicate back that they can't join
+                socket.emit("fullLobbyConnect"); 
+                return; 
+            }
             socket.emit("connected",room.players[socket.id].admin)
             await socket.to(socketRoom).emit("playerJoin",socket.id,username, room.players[socket.id].admin)
             serverMessage(`${username} has just joined!`)
+
+            if(room.serverAdmin && Object.keys(room.players).length == room.maxPlayers)
+            {
+                room.startGame(io); 
+            }
         })
 
         socket.on("chatMsg", (text) =>
@@ -139,12 +161,50 @@ export default function (io)
 
     //create a button to listen to start game func
 
+    this.joinPublicRoom = () => 
+    {
+        if(Object.keys(this.publicRooms).length == 0) 
+        {
+            return this.createPublicRoom(); 
+        }
+        else 
+        {
+            const lastRoomId = Object.keys(this.publicRooms)[Object.keys(this.publicRooms).length-1] 
+
+            if(Object.keys(this.publicRooms[lastRoomId].players).length == this.publicRooms[lastRoomId].maxPlayers )
+            {
+                //room is full
+                return this.createPublicRoom(); 
+            }
+            else
+            {
+                return lastRoomId; 
+            }
+
+            
+        }
+    }
+    
+    this.createPublicRoom = () =>
+    {
+        const roomId = nanoid();
+
+        this.publicRooms[roomId] = new GameManager(roomId, true, 4, ()=>
+        {
+            delete this.publicRooms[roomId]
+        })
+        return roomId; 
+    }
     this.addRoom =  () =>
     {
         const roomId = nanoid();
         //console.log("WTF")
         //console.log(this.rooms)
-        this.rooms[roomId] = new GameManager(roomId)
+        this.rooms[roomId] = new GameManager(roomId, false, 8,()=>
+        {
+            delete this.rooms[roomId]
+            console.log("Room Deleted")
+        })
         return roomId; 
         //do later
     }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Gmae</title> 
+    <title>Real Estate Guesser</title> 
     <script src="./socket.io.min.js" integrity="sha384-KAZ4DtjNhLChOB/hxXuKqhMLYvx3b5MlT55xPEiNmREKRzeEm+RVPlTnAn0ajQNs" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
     
@@ -12,36 +12,38 @@
 <body>
   
     <h1>Real Estate Guesser</h1>
+    <div id="settings">
+      <h3>Settings</h3>
+      <p id="guessTimeDisplay"></p>
+      <p id="maxRoundsDisplay"></p>
+      <p id="showLocationDisplay"></p>
+      <p></p>
+    </div>
     <div class="stats">
       <p id="gameState"></p>
       <p id="joinCode"></p>
       <p id="inviteLink"></p>
-      <div id="settings">
-        <h3>Settings</h3>
-        <p id="guessTimeDisplay"></p>
-        <p id="maxRoundsDisplay"></p>
-        <p id="showLocationDisplay"></p>
-        <p></p>
-      </div>
+      
     </div>
-    <h3>Players:</h3>
+    <h3 id="playerUpdateCount">Players:</h3>
     <div id="playerDisplay">
-      <div id="chatArea" style="width: 25%; height: 30%; background-color: rgba(186, 186, 186,0.4); position: absolute; bottom:0;right: 0;z-index: 5;">
-        <div id="chatContianer" style="background-color: rgba(92, 92, 92,0.4); width:98%; height:73%; margin-left: 1% ;margin-top: 1% ;"  id="chatContianer"></div>
-        <div id="inputArea" style="background-color:rgba(92, 92, 92,0.4) ;height:20%; width:97%; margin-left:1%;margin-top: 2%;">
-          <label  novalidate for="inp" class="inp" >
-            <input id="inputMsg"  class="inputMessage" style="margin-top:-2%;margin-left: 1%;"type="text" id="inp" placeholder="message" pattern=".{6,}" required>
-            <svg margin-left="1%"width="100%" height="18px" viewBox="0 0 280 18" class="border">
-              <path d="M0,12 L223.166144,12 C217.241379,12 217.899687,12 225.141066,12 C236.003135,12 241.9279,12 249.827586,12 C257.727273,12 264.639498,12 274.514107,12 C281.097179,12 281.755486,12 276.489028,12"></path>
-            </svg>
-            
-          </label>
+      
+    </div>
+    
+    <div id="chatArea" style="width: 25%; height: 30%; background-color: rgba(186, 186, 186,0.4); position: absolute; bottom:0;right: 0;z-index: 5;">
+      <div id="chatContianer" style="background-color: rgba(92, 92, 92,0.4); width:98%; height:73%; margin-left: 1% ;margin-top: 1% ;"  id="chatContianer"></div>
+      <div id="inputArea" style="background-color:rgba(92, 92, 92,0.4) ;height:20%; width:97%; margin-left:1%;margin-top: 2%;">
+        <label  novalidate for="inp" class="inp" >
+          <input id="inputMsg"  class="inputMessage" style="margin-top:-2%;margin-left: 1%;"type="text" id="inp" placeholder="message" pattern=".{6,}" required>
+          <svg margin-left="1%"width="100%" height="18px" viewBox="0 0 280 18" class="border">
+            <path d="M0,12 L223.166144,12 C217.241379,12 217.899687,12 225.141066,12 C236.003135,12 241.9279,12 249.827586,12 C257.727273,12 264.639498,12 274.514107,12 C281.097179,12 281.755486,12 276.489028,12"></path>
+          </svg>
           
-        <!-- <button onclick="SendMessageDOM()" class="btn">Send</button> -->
-        </div>
+        </label>
+        
+      <!-- <button onclick="SendMessageDOM()" class="btn">Send</button> -->
       </div>
     </div>
-
     
 
     <script src="game.js"></script>
@@ -72,12 +74,14 @@
     </div>
 
     <div id="winContainer">
+      
       <h1>Winner:</h1>
       <div id="winNameDisplay">
       </div>
+      <a href="/">Join a new game?</a>
       <h2>Rankings</h2>
-      <ol id="rankings">
-      </ol>
+      <div id="rankings">
+      </div>
     </div>
 
     <div id="roundStatus">
@@ -94,7 +98,7 @@
           <input style="width:80%" oninput="UpdateTimeLimitAdmin()" type="range" min="15" max="300" step="1" value="90" id="timeLimitRange" >
 
           <div>Max Rounds: <span id="maxRoundValueAdmin"></span> </div>
-          <input style="width:80%" oninput="UpdateMaxRoundsAdmin()" type="range"  max="20" min="1" value="10" id="maxRoundsInput">
+          <input style="width:80%" oninput="UpdateMaxRoundsAdmin()" type="range"  max="20" min="1" value="5" id="maxRoundsInput">
           <div>Show Location</div>
           <input type="checkbox" value="false" id="showLocationInput">
           <br></br>

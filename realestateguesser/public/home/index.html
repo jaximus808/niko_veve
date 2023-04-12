@@ -13,80 +13,36 @@
         <link rel="stylesheet" href="">
     </head>
     <body>
-       
+        <script>
+            function privateGame() 
+            {
+                window.location.href = "/customgame"
+            }
+
+            function publicGame()
+            {
+                
+                fetch("/joinpublicroom", {
+                    method:"GET", 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        },
+                    }
+                ).then(res => res.json())
+                .then(data =>
+                {
+                    window.location.href = `/publicgame/${data.roomId}`
+                }) 
+                
+            }
+        </script>
         <h1>Real Estate Guesser</h1>
 
         <p>Debugging Mode v0.0.1</p>
         
-        <h2>Join a Private Game:</h2>
-        <label>game code: </label>
-        <input id="gameCodeInput">
-        <p id="statusJoin"></p>
-        <button onclick="joinGameWithCode()">Join</button>
+        <button onclick="privateGame()" >Private Game</button>
 
-
-        <h2>Create a Private Game:</h2>
-        <!-- <label>password:</label>
-        <input id="gameCodeInput">
-        <p></p>
-        <label>max users:</label>
-        <input id="gameCodeInput">
-        <p></p> -->
-        <button onclick="createNewGame()">Create Game</button>
-
-
-        <script >
-
-            async function createNewGame()
-            {
-                //var username = document.getElementById("usernameInput").value; 
-                await fetch("/createRoom            ", {
-                    method:"POST", 
-                    headers: {
-                        'Content-Type': 'application/json',
-                        },
-                    body: JSON.stringify({
-                    })
-                }).then(res => res.json())
-                .then(data => {
-                    console.log(data)
-                    if(data.error)
-                    {
-                        console.log(data.msg);
-                        return;
-                    }
-                    window.location.href = `/game/${data.roomId}`
-                    }
-                )
-            }
-
-            async function joinGameWithCode()
-            {
-                var idCode = document.getElementById("gameCodeInput").value;
-                //var username = document.getElementById("usernameInput").value; 
-                await fetch("/joinGame", {
-                    method:"POST",
-                    body: JSON.stringify({
-                        roomId: idCode,
-                    }),
-                    headers: {
-                        'Content-Type': 'application/json',
-                        },
-                }).then(res => res.json())
-                .then(data =>
-                {
-                    console.log(data)
-                    if(!data.error)
-                    {
-                        window.location.href = `/game/${idCode}`
-                    }
-                    else
-                    {
-                        document.getElementById("statusJoin").innerHTML = data.msg
-                    }
-                })
-            }
-
-        </script>
+        <button onclick="publicGame()" >Public Game</button>
+        
     </body>
 </html>
