@@ -306,8 +306,9 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
             this.players[Object.keys(this.players)[0]].admin = true; 
             return true;
         }
-        else 
+        else if(Object.keys(this.players).length > 0)
         {
+            console.log("deleting room in 30s")
             this.roomCleanUpTimeout = setTimeout(deleteRoomCallBack, this.roomDelTimeout); 
         }
         return false;

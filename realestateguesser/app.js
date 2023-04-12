@@ -65,12 +65,6 @@ app.post("/joinGame", (req, res)=>
     //const username = req.body.username; 
     const roomCode = req.body.roomId; 
 
-    // if(!username || username.replace(/\s/g, '') == '')
-    // {
-    //     res.send({error:true, error:"missing username"})
-    //     return; 
-    // }
-    //private room
     if(roomCode)
     {
         if(!roomManager.rooms[roomCode]) 
@@ -96,6 +90,11 @@ app.use("/privategame/:gameid", (req, res, next) =>
     next()
 
 }, express.static(path.join(__dirname,'public', 'game')))
+
+app.get("/api/images/:name", (req, res) =>
+{
+    res.sendFile(path.join(__dirname, "estateImages",req.params.name))
+})
 
 app.use("/publicgame/:gameid", (req, res, next) =>
 {

@@ -319,9 +319,11 @@ socket.on("playerRoundUpdateEnd", (data) =>
 socket.on("roundStart", (data) =>
 {
     setImage(0)
+
+    document.getElementById("winContainer").style.display = "none"
     for(let i = 0; i < data.images.length; i++)
     {
-        document.getElementById(`promptImg${i}`).setAttribute("src", data.images[i]); 
+        document.getElementById(`promptImg${i}`).setAttribute("src", `/api/images/${data.images[i]}`); 
     }
     document.getElementById("promptDesc").innerHTML = data.description; 
 
