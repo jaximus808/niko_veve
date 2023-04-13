@@ -23,6 +23,11 @@ You can then port the sqlExport file into your SQL database and set this up as y
 
 once all these are done go into the route from the terminal and type the command "npm run dev", this will run nodemon which will automatically refresh the server if there are any changes to the code. If you don't want this then run "npm run start" which will instead start the project normally
 
+if this is running on your machine you can use the link
+"localhost:3000" and it should display the homepage.
+
+if you want others on the same network to connect give them your private ip (this you can look up how to do) and send them the link {ip}:3000 and if done correctly should display the game
+
 *To run on a cloud provider* 
 
 This very much depends on the cloud provider, but running the server should be simple.
@@ -45,7 +50,7 @@ AWS
 Vercel
 -it has an excellent free package to use for hosting when testing the actual deployment of the server 
 
-*How this whole project works* 
+*How this project works* 
 
 This project uses socket.io to handle websockets and such. These scripts can be found in the /backend_game directory
 
@@ -83,9 +88,11 @@ app.get("/api/images/:name", (req, res) =>
     res.sendFile(path.join(__dirname, "estateImages",req.params.name))
 })
 
-the webs server will send the image based on the route which the naem will be stored in :name
+the web server will send the image based on the route which the naem will be stored in :name
 
 
 *Final words* 
 
-There are many resources onlien for how these resources work if you want to do further work on it. If you have any questions feel free to contact me with questions or other features you may want to add. it was very enjoyable working with you!
+There are many resources online for how these resources work if you want to do further work on it. If you have any questions feel free to contact me with questions or other features you may want to add. it was very enjoyable working with you!
+
+you can view the code on github here: https://github.com/jaximus808/niko_veve
