@@ -16,6 +16,7 @@ SQLUSER = <USER>
 SQLPWD = <PWD>
 DATABASENAME = <DBNAME>
 
+//Only do this if the node_modules folder is missing
 then open up the terminal in this directory (ensure the same directory as package.json) and run "npm install"
 this will run through the package.json and download all the packages for you automatically 
 
