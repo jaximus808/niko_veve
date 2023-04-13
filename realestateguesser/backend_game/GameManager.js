@@ -2,7 +2,7 @@ import sqldb from "../mysql/mysql.js"
 
 export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
 {
-
+    //functions to send messages from the server from this object
     const serverMessage = (io, msg) =>
     {
         io.to("room-"+this.roomId).emit("chatMessage", 
@@ -13,6 +13,8 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
             server: true
         })
     } 
+
+    //converts seocnds to miliseconds     
     this.milis = (seconds) =>
     {
         return seconds*1000;
@@ -38,7 +40,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
 
     this.round = 0; 
 
-    this.bufferTimeBetween = this.milis(5)
+    this.bufferTimeBetween = this.milis(10)
 
     this.acceptingGuesses = false; 
 
@@ -46,30 +48,28 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
 
     this.timerOb; 
 
-    //might need to handle currency
-
+    //this is what is being prompted in this room 
     this.targetEstate = {
         price: 0, 
         location: "",
         imageLinks: [],
         description:"", 
         points: 100,
-        percErr: 0.5 // 50 percent 
+        percErr: 0.5,
+        estateid: -1 // 50 percent 
     }; 
 
-    
-
-    //default server settings
+    //settings in server which can be changed 
     this.settings = {
         maxRounds: 5,
         guessTime: this.milis(90),
         showLocation: true
     }
 
-
+    //grabs the sql database and creates a target object
     this.createGuessOb = async () =>
     {
-        let guessObj = await this.estateDB.getRandomLocation();
+        let guessObj = await this.estateDB.getRandomLocation(this.targetEstate.estateid);
         
 
         //will need to check this with db 
@@ -77,8 +77,10 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         this.targetEstate.location = guessObj.location
         this.targetEstate.imageLinks = JSON.parse(guessObj.images); 
         this.targetEstate.description = guessObj.description
+        this.targetEstate.estateid = guessObj.estateId
     }
 
+    //calcualtes the winners based on the players connected to the game
     this.getWinners = () =>
     {
         let max = 0; 
@@ -99,6 +101,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         return winIds
     }
 
+    //handles ending the game 
     this.endGame =(io)=>
     {
         if(serverAdmin)
@@ -133,6 +136,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         }
     }
 
+    //handles the ending of each round 
     this.endRound = (io) => 
     {
         this.guessCount = 0; 
@@ -146,10 +150,9 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
             
         })
         serverMessage(io, `Guessing is over! The actual price is $${this.targetEstate.price} USD! `)
-        console.log(this.settings.maxRounds)
+        
         if(this.round == this.settings.maxRounds) 
         {
-            console.log("GAME OVER")
             
             setTimeout(()=>
             {
@@ -166,6 +169,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         }
     }
 
+    //handles starting the round 
     this.startRound =async (io) =>
     {
         for(let i = 0; i < Object.keys(this.players).length; i++)
@@ -191,6 +195,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         }, this.settings.guessTime); 
     }
 
+    //using each of the guesses the points will be calculated by how far it is from the target price with a 50% error
     this.calculatePoints = () =>
     {
         //how off they can be for points
@@ -199,15 +204,12 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         {
             let pGuess = this.players[Object.keys(this.players)[i]].guess 
 
-            console.log(pGuess)
+            //console.log(pGuess)
             //no points awarded
             if(pGuess == -1) continue; 
 
             //thid is returrning null idk how
-            console.log((rangeError- Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess ))))
-            console.log("EMPW")
-            console.log( Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess )))
-            console.log(rangeError)
+            
             let pts = Math.round(100 * (rangeError- Math.min( rangeError, Math.abs( this.targetEstate.price - pGuess )))/rangeError); 
 
             //or maybe here
@@ -218,6 +220,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
 
     }
 
+    //handles guessing the price and adding to the player in the room 
     this.guessPrice = (socketId, price, io) =>
     {
         if(isNaN(price)) return; 
@@ -234,17 +237,14 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
             this.endRound(io)
         }
         
-
-        //some emit thingy 
-    }
+  }
      
-
+//starts the game loop from start round, to end round, and loop using inteverals until the rounds is met
     this.startGame = async (io) =>
     {
 
         if(this.gameState != 0 ) return; 
         await this.createGuessOb()
-        console.log(this.targetEstate)
 
         if(this.gameState == 1 || Object.keys(this.players).length == 0) return; 
         this.gameState = 1; 
@@ -258,7 +258,7 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         this.startRound(io);    
 
     }
-
+//handles changing settings 
     this.changeSettings = (socketid,setSettings) =>
     {
 
@@ -268,12 +268,11 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
    
         if(setSettings.guessTime > 300 || setSettings.guessTime < 15 || setSettings.maxRounds < 1 || setSettings.maxRounds > 20)
 
-        console.log(setSettings)
         this.settings.maxRounds = setSettings.maxRounds
         this.settings.showLocation = setSettings.showLocation
         this.settings.guessTime = this.milis(setSettings.guessTime)
     }
-
+//adds a player object to the current players connected to the game room 
     this.addPlayer = (socketId, name ) =>
     {
         if(Object.keys(this.players).length == this.maxPlayers )
@@ -295,7 +294,8 @@ export default function (roomId, serverAdmin, maxPlayers, deleteRoomCallBack )
         
         return true; 
     }
-    
+
+    //if a player leaves remove them from player dictionary 
     this.removePlayer = (socketID, socket) =>
     {
         var needNewAdmin = (this.players[socketID].admin)

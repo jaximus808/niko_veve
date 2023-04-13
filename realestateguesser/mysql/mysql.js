@@ -27,10 +27,14 @@ export default function() {
     this.getRowCount(this.estateDataCount)
 
 
-    this.getRandomLocation = async () => 
+    this.getRandomLocation = async (exclude = -1) => 
     {
 
       let randomNumber = Math.ceil(Math.random()*this.estateDataCount)
+      if(randomNumber == exclude)
+      {
+        randomNumber = 0;
+      }
 
       return new Promise((resolve, reject) =>
       {
@@ -44,8 +48,4 @@ export default function() {
       })
     }
 
-    this.getRandomLocationExclude = (id) => 
-    {
-        
-    }
 };

@@ -16,35 +16,24 @@ export default function (io)
     }
 
     this.io = io
+
+    //this is the full socket logic for the gmae, you can look at socket.io documentation about how it works more indepth
+    //essentially the socket object is defines the specific connection, and here we're creating different listening 
+    //functions
+
+    //you can also use the socket to send data from the server using the socket connection to the specific client.
+    //each socket has an ID using socket.id which is unique to each person 
     this.io.on("connection", async  (socket) =>
     {
 
-        //maybe make admin decided from first person to connect to the game 
-
-        //also need to check if there is no admin when one person leaves 
-
-        // need settings
-
-
-        
-        // if(!socket.handshake.headers.cookie)
-        // {
-        //     socket.emit("promptName")
-        // }
-        // else 
-        // {
-        //     var cookies = cookie.parse(socket.handshake.headers.cookie);  
-        //     if(!cookies.username)
-        //     {
-        //         socket.emit("promptName")
-        //     }
-        // }
+        //gets the code the user joined from the link and if the game is private or pbulic 
         const url = socket.request.headers.referer.split("/")
         const roomCode = url[url.length - 2];
         const privateGame = url[url.length -3] == "privategame"; 
         const socketRoom = "room-"+roomCode
         //console.log(roomCode )
 
+        //this is a function that sends messages from the server to client streamlined 
         const serverMessage = (msg) =>
         {
             io.to(socketRoom).emit("chatMessage", 
@@ -56,6 +45,7 @@ export default function (io)
             })
         }
 
+        //checks to make sure the room actually exists when they use the link 
         if(!this.rooms[roomCode] && privateGame)
         {
             socket.emit("returnHome")
@@ -67,21 +57,13 @@ export default function (io)
             return 
         }
 
-
-        await socket.join(socketRoom)
         
+        
+        //references the room to use in the rest of the code to access functions and data 
         const room = (privateGame) ? this.rooms[roomCode] : this.publicRooms[roomCode];
-        //console.log(room.players)
-        socket.emit("InitGameInfo", 
-            {
-                players: room.players,
-                gameState: room.gameState,
-                timer: 5,
-                round: 2,
-                settings: room.settings, 
-                maxPlayers: room.maxPlayers
-            }
-        )
+        
+        //give the initial game info to the client connecting
+        
 
         socket.on("joinGame", async(username) =>
         {
@@ -93,16 +75,36 @@ export default function (io)
                 socket.emit("fullLobbyConnect"); 
                 return; 
             }
+            //if the room exists then join the room 
+            //rooms work by having certain sockets join a specific room with a name, when the server sends a message to that spcific room only the sockets in that room get the message. 
+            //only if the player can join can the user get the information about the game and actually join the game room to recieve data. 
+       
+            await socket.join(socketRoom)
+            socket.emit("InitGameInfo", 
+            {
+                players: room.players,
+                gameState: room.gameState,
+                timer: 5,
+                round: 2,
+                settings: room.settings, 
+                maxPlayers: room.maxPlayers
+            })
+            //sends the connected emit to tell the client is connected 
             socket.emit("connected",room.players[socket.id].admin)
             await socket.to(socketRoom).emit("playerJoin",socket.id,username, room.players[socket.id].admin)
             serverMessage(`${username} has just joined!`)
 
+            //in public games if the game room is full then start
             if(room.serverAdmin && Object.keys(room.players).length == room.maxPlayers)
             {
                 room.startGame(io); 
             }
+            
+        
         })
 
+
+        //if the user sends a chat message send to all clients in the room 
         socket.on("chatMsg", (text) =>
         {
             text.trim(); 
@@ -118,18 +120,16 @@ export default function (io)
             
         })
 
-        socket.on("startGame", () =>
-        {
-            if(!room.players[socket.id].admin)return;
-            serverMessage("Game Starting!")
-            room.startGame(io); 
-        })
+        
 
+        //handle guesses 
         socket.on("guess", (price) =>
         {
+            if(!room.players[socket.id]) return;
             room.guessPrice(socket.id, price, this.io);
         })
 
+        //change settings 
         socket.on("changeSettings", (settingsUpdate) =>
         {
             room.changeSettings(socket.id, settingsUpdate)
@@ -137,13 +137,14 @@ export default function (io)
             io.to(socketRoom).emit("settingUpdate", room.settings)
         })
 
-
+        //if the admin sends a startGame emit start the game
         socket.on("StartGame", ()=>
         {
             if(!room.players[socket.id].admin) return; 
             room.startGame(this.io)
         })
-
+        
+        //this is automatically handle when the client leaves the web page 
         socket.on("disconnect", () =>
         {
             if(!room.players[socket.id]) return;
@@ -153,14 +154,16 @@ export default function (io)
             if(needUpdate)
             {
                 socket.to(socketRoom).emit("adminUpdate", Object.keys(room.players)[0])
+
+                Object.keys(room.players)[0].emit("showAdminPanel");
             }
         })
 
     })
 
 
-    //create a button to listen to start game func
-
+    //when a user clicks join a public game it will add them to the most recently created game
+    //if the game is already full then the server will create a new public room and that id will be used
     this.joinPublicRoom = () => 
     {
         if(Object.keys(this.publicRooms).length == 0) 
@@ -185,6 +188,7 @@ export default function (io)
         }
     }
     
+    //when a new public room created it will create a new GameManager object and store that with the random ID 
     this.createPublicRoom = () =>
     {
         const roomId = nanoid();
@@ -195,11 +199,11 @@ export default function (io)
         })
         return roomId; 
     }
+
+    //the same logic as the function above but added to the private rooms instead
     this.addRoom =  () =>
     {
         const roomId = nanoid();
-        //console.log("WTF")
-        //console.log(this.rooms)
         this.rooms[roomId] = new GameManager(roomId, false, 8,()=>
         {
             delete this.rooms[roomId]

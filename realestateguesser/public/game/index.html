@@ -68,6 +68,17 @@
       </div>
     </div>
 
+
+    <div id="midRoundGuessDisplay">
+      <h2>Correct price is</h2>
+      <h3 id="correctPriceDisplay"></h3>
+      <h3>Ranking Guesses:</h3>
+      <div id="midRoundRankings">
+
+      </div>  
+    </div>
+    
+    <div id="loadingInDisplay"></div>
     <div id="guessArea">
       <div>Guess:</div>
       $<input type="number" id="guessEstateInput">
@@ -114,6 +125,7 @@
    
     <div id="usernamePrompt"> 
         <h2>Enter a Username</h2>
+        <p>Once you'll join the game room will appear! </p>
         <input id="usernameInput">
         <p id="joinStatus"></p>
         <button onclick="joinGame()">join!</button>

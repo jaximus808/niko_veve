@@ -1,4 +1,4 @@
-
+//creates the connection websocket
 const socket = io();
 
 var localUsername 
@@ -17,6 +17,7 @@ let imageIdDisplay = 0;
 
 let maxPlayers = 0; 
 
+//creates event listeners after everything loads
 
 window.onload = (event) =>
 {
@@ -45,17 +46,21 @@ window.onload = (event) =>
 
 function sendMsg()
 {
+    //gets the value of the message input
     let msg = document.getElementById("inputMsg").value; 
+    //checks to make sure there is a message 
     if(msg.trim().length == 0) return;
     document.getElementById("inputMsg").value = ''
+    //sends the message
     socket.emit("chatMsg",msg);
 }
 
-
+//display the link code dynamically
 document.getElementById("joinCode").innerHTML = `Send this room code to friends! <span class="linksDisplay" >${window.location.href.split('/')[window.location.href.split('/').length-2]}</span>`
 
 document.getElementById("inviteLink").innerHTML = `Invite Link: ${window.location.href}`
 
+//Game Manager logic to handle players in the client and be able to display players and game stats on the client. 
 function GameManager(players, timer, round )
 {
     this.players = players; 
@@ -64,10 +69,10 @@ function GameManager(players, timer, round )
 
     this.playerDisplayEl = document.getElementById("playerDisplay")
     
+
+    //creates a player block in the client
     this.displayPlayers = (id, name, points, admin)=>
     {
-        console.log(admin)
-        console.log("MEOW")
         var playerDiv = document.createElement("div") 
         playerDiv.setAttribute("class","playerImg")
         var namePlayer = document.createElement("p");
@@ -88,21 +93,18 @@ function GameManager(players, timer, round )
 
     }
 
+    //rank the players and display it 
     this.DisplayRankPlayers = (winnerArray ) =>
     {
         document.getElementById("winNameDisplay").innerHTML = ""; 
         document.getElementById("rankings").innerHTML = ""; 
 
         const rankingPlayers = Object.keys(this.players);
-        console.log("878t878t97")
+        
         rankingPlayers.sort((a,b) =>
         {
             return  this.players[b].points - this.players[a].points 
         })
-        console.log(rankingPlayers)
-        console.log("MEW")
-        console.log(winnerArray)
-        console.log(winnerArray.length)
         let additionString = ""
         for(let i = 0; i < winnerArray.length; i++)
         {
@@ -130,18 +132,21 @@ function GameManager(players, timer, round )
         document.getElementById("winContainer").display = "inline"
     }
 
+    //initially display the players 
+
     for(const [key, value] of Object.entries(this.players))
     {
         this.displayPlayers(key, value.name, value.points,value.admin);
     }
 
+    //change the points on the players on the client
     this.updatePlayerPoints = (id, points) =>
     {
         players[id].points = points
         document.getElementById("points"+id).innerHTML = `Points: ${points}`
     }
 
-
+    //add a new player joining 
     this.addPlayer = (id, playerData) =>
     {
         this.players[id] = playerData 
@@ -150,6 +155,7 @@ function GameManager(players, timer, round )
         document.getElementById("playerUpdateCount").innerHTML = `Players: (${Object.keys(this.players).length}/${maxPlayers})`
     }
 
+    //get rid of a player when the leave from the client
     this.removePlayer = (id) =>
     {
         delete this.players[id] 
@@ -157,13 +163,12 @@ function GameManager(players, timer, round )
 
         document.getElementById("playerUpdateCount").innerHTML = `Players: (${Object.keys(this.players).length}/${maxPlayers})`
     }
-
-
-
 }
 
+//send a message to the server with the username 
 function joinGame()
 {
+    //get name in input
     localUsername= document.getElementById("usernameInput").value; 
 
     if(!localUsername || localUsername.replace(/\s/g, '') == '')
@@ -172,19 +177,13 @@ function joinGame()
         return; 
     }
 
+    //send to the server with the uername
     socket.emit("joinGame", localUsername)
 }
 
-function realEstatePrompt(data) 
-{
-    //document.getElementById("estatePrompterContainer").display = "inline"
-    
-    
-}
-
+//when a message is recieved from the server display it in the chat box 
 function RenderMessageDOM(data)
 {
-    console.log(data)
     var chatContainer = document.getElementById("chatContianer");
     var chatP = document.createElement("p");
     if(data.server)
@@ -199,6 +198,7 @@ function RenderMessageDOM(data)
     chatContainer.prepend(chatP);
 }
 
+//these two functions are for updating the value of the text
 function UpdateTimeLimitAdmin()
 {
     document.getElementById("timeLimitValueAdmin").innerHTML = document.getElementById("timeLimitRange").value
@@ -209,6 +209,7 @@ function UpdateMaxRoundsAdmin()
     document.getElementById("maxRoundValueAdmin").innerHTML = document.getElementById("maxRoundsInput").value
 }
 
+//when the admin changes settings and click chnage settings the values are uploaded to the server
 function changeSettings()
 {
     timeLimitUpdate = document.getElementById("timeLimitRange").value; 
@@ -221,8 +222,7 @@ function changeSettings()
     })
 }
 
-
-//do guess input logic 
+//simply just sends a start game message to the server
 function startGame()
 {
     socket.emit("StartGame");
@@ -230,19 +230,22 @@ function startGame()
     document.getElementById("winContainer").style.display = "none"
 }
 
+//used for counting down the timer in the display 
 function startTimer(setTimer,guessing)
 {
+    //make sure there no already made interval 
     clearInterval(timerInteveralOb)
-    console.log(setTimer)
     currentGuessTime = setTimer + 1; 
+    //counts down the timer
     updateTime(guessing)
+    //each second uppdate the time to go down
     timerInteveralOb = setInterval(()=>
     {
         updateTime(guessing)
     }, 1000)
-    //do later
 }
 
+//decreass the time by one and displays it in the DOM 
 function updateTime(guessing)
 {
     if(currentGuessTime == 0) return; 
@@ -251,11 +254,16 @@ function updateTime(guessing)
     "Time to Guess:":"Next Round Starts in: "} ${currentGuessTime}`
 }
 
+//this is used to cycle between the image displays allowing the players to see the other images
+//the image value is used to say which image the user is looking at, this is also used to disable the button if there is no button for the image to switch to
 function setImage(imgValue)
 {
     if(imgValue >= imageDisplayLens || imgValue < 0) return; 
+    //hides the current displayed image 
     document.getElementById(`promptImg${imageIdDisplay}`).style.display ="none"
     imageIdDisplay = imgValue
+
+    //then show the new displayed image
     document.getElementById(`promptImg${imageIdDisplay}`).style.display ="inline"
     console.log(imageIdDisplay)
     if(imageIdDisplay == 0 )
@@ -276,17 +284,19 @@ function setImage(imgValue)
     }
 }
 
+//move the image left 
 function incrementImageLeft()
 {
     setImage(imageIdDisplay-1)
 }
 
-
+//move the image right 
 function incrementImageRight()
 {
     setImage(imageIdDisplay+1)
 }
 
+//get the value that they entered and send that to the server 
 function sendGuess()
 {
     let guessPrice = parseInt(document.getElementById("guessEstateInput").value.trim())
@@ -300,15 +310,48 @@ function sendGuess()
 }
 
 
-
+//after each round update the points of each player using the data from the server 
+//it also displays the actual value of the home 
 socket.on("playerRoundUpdateEnd", (data) =>
 {
+    //do this
+
+    //have the server also send the points
+
+    document.getElementById("midRoundRankings").innerHTML = ""; 
+
+    const rankingPlayers = Object.keys(data.players);
+        
+    rankingPlayers.sort((a,b) =>
+    {
+        return  Math.abs(data.players[a].guess - data.answer) - Math.abs(data.players[b].guess - data.answer)
+    })
+
+    for(let i = 0; i < rankingPlayers.length; i++)
+    {
+        const displayPlayerLi = document.createElement("div");
+        const displayPlayerDiv = document.createElement("div"); 
+        const displayName = document.createElement("h3");
+        displayName.innerHTML = `${i+1}. ${data.players[rankingPlayers[i]].name}`; 
+
+        const displayPts = document.createElement("div");
+        displayPts.innerHTML = (data.players[rankingPlayers[i]].guess > 0) ? data.players[rankingPlayers[i]].guess : 0;
+        displayPlayerDiv.appendChild(displayName)
+        displayPlayerDiv.appendChild(displayPts)
+        displayPlayerLi.appendChild(displayPlayerDiv)
+        document.getElementById("midRoundRankings").appendChild(displayPlayerLi)   
+    }
+
+    document.getElementById("correctPriceDisplay").innerHTML = `$${data.answer}`
+
+    document.getElementById("estatePrompterContainer").style.display = "none"
+    document.getElementById("midRoundGuessDisplay").style.display = "inline"
+
     for(let i = 0; i < Object.keys(data.players).length; i++)
     {
         let _playerId = Object.keys(data.players)[i]
         gameManager.updatePlayerPoints(_playerId, data.players[_playerId].points)
     }
-    console.log(data)
     document.getElementById("priceAnswerContainer").style.display = "inline"
     document.getElementById("displayAnswerPriceID").innerHTML = `$${data.answer}`
 
@@ -316,15 +359,24 @@ socket.on("playerRoundUpdateEnd", (data) =>
     startTimer(data.bufferTimer, false); 
 })
 
+//runs each round when it starts
 socket.on("roundStart", (data) =>
 {
+    //sets the image to the first image 
     setImage(0)
 
+    //hide the win display 
     document.getElementById("winContainer").style.display = "none"
+
+
+    document.getElementById("midRoundGuessDisplay").style.display = "none"
+
+    //updates the new images
     for(let i = 0; i < data.images.length; i++)
     {
         document.getElementById(`promptImg${i}`).setAttribute("src", `/api/images/${data.images[i]}`); 
     }
+    //updates the data and desc of the real estate
     document.getElementById("promptDesc").innerHTML = data.description; 
 
     if(data.location != null)
@@ -332,8 +384,10 @@ socket.on("roundStart", (data) =>
         document.getElementById("locationDisplay").innerHTML = data.location;
     }
 
+    //starts the new timer for long the player can guess. The client does NOT do the "how long can guess" timer logic, it just displays the timer. 
     startTimer(data.guessTimer,true); 
 
+    //hide and display the parts of the web page that needs to tbe seen. 
     document.getElementById("roundNumDisplay").innerHTML = data.round
 
     document.getElementById("estatePrompterContainer").style.display = "inline"
@@ -345,6 +399,7 @@ socket.on("roundStart", (data) =>
     document.getElementById("displayAnswerPriceID").innerHTML = ""
 })
 
+//makes each point to zero when the server says so, used for just cleaning up stuff. 
 socket.on("resetPoints", ()=>
 {
     for(let i = 0; i < Object.keys(gameManager.players).length; i++)
@@ -354,33 +409,36 @@ socket.on("resetPoints", ()=>
     }
 })
 
+//listening for the server to update a new message 
 socket.on("chatMessage",(data) =>
 {
     RenderMessageDOM(data)    
 })
 
+//if you try to join and the lobby is full it'll tell you 
 socket.on("fullLobbyConnect", ()=>
 {
     document.getElementById("joinStatus").innerHTML = "Game is full! Try again later"; 
 })
 
+//if ur successfully connected add urself to the client interpetation of the game, the server will also tell you if you are admin or not to display admin controls
 socket.on("connected", (admin)=>
 {
     document.getElementById("usernamePrompt").style.display = "none"
 
+    document.getElementById("loadingInDisplay").style.display = "none"
+
     if(admin) document.getElementById("AdminPanel").style.display = "inline"
-    gameManager.addPlayer(socket.id,{
-        name: localUsername,
-        points: 0,
-        admin:admin 
-    })
+    
 })
 
+//if the room no exsit go back to the home page 
 socket.on("returnHome", ()=>
 {
     window.location.href ="/"
 })
 
+//when you first join the server must tell you what is happening in the server (which is where the real game happens), the client needs to interpet this and the server will first tell you what and who is in the server and what is initally happening
 socket.on("InitGameInfo", (res) =>
 {
     
@@ -409,6 +467,7 @@ socket.on("InitGameInfo", (res) =>
     document.getElementById("playerUpdateCount").innerHTML = `Players: (${Object.keys(gameManager.players).length}/${maxPlayers})`
 })
 
+//if a player joins add them to the client's game Manager and display it
 socket.on("playerJoin", (id, username, admin,settings) =>
 {
     gameManager.addPlayer(id, {name:username,points: 0, admin:admin})
@@ -418,7 +477,7 @@ socket.on("playerJoin", (id, username, admin,settings) =>
 
 })
 
-
+//when the game ends display everything that neesd to be shown in the end screen
 socket.on("gameEnd", (winnerOb)=>
 {
     document.getElementById("estatePrompterContainer").style.display = "none"; 
@@ -426,23 +485,23 @@ socket.on("gameEnd", (winnerOb)=>
     document.getElementById("winContainer").style.display = "inline"; 
 
     document.getElementById("stats").style.display = "inline"; 
-
-    
 })
 
+//display admin panel if the user is an admin 
 socket.on("showAdminPanel", ()=>
 {
 
     document.getElementById("AdminPanel").style.display = "inline";
 })
 
-
+//if the server tells you antoher clietn left remove them from the client interpetation of the game 
 socket.on("disconnectPlayer", (id) =>
 {
     gameManager.removePlayer(id); 
 
 })
 
+//if the admin updates the settings of the game render those new settings 
 socket.on("settingUpdate", (settings) =>
 {
     document.getElementById("guessTimeDisplay").innerHTML = `Guess Time: ${settings.guessTime/1000}`
@@ -454,12 +513,8 @@ socket.on("settingUpdate", (settings) =>
     document.getElementById("showLocationDisplay").innerHTML = `Show Location: ${(settings.showLocation) ? "True": "False"}`
 })
 
+//puts (admin) next to new admin if needed
 socket.on("adminUpdate", (updateId)=>{
-    //can prob do better
-    console.log(`name${updateId}`)
     document.getElementById(`name${updateId}`).innerHTML =document.getElementById(`name${updateId}`).innerHTML+ " (admin)"
-    if(gameManager.players[updateId].username == localUsername) 
-    {
-        document.getElementById("AdminPanel").style.display == "inline"
-    }
+    
 })

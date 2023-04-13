@@ -105,6 +105,6 @@ app.use("/publicgame/:gameid", (req, res, next) =>
 
 app.use("/",express.static(path.join(__dirname,'public', 'home')));
 app.use("/customgame",express.static(path.join(__dirname,'public', 'customGame')));
-//app.use("/",require("./router/routes.js"));
+
 
 httpServer.listen(process.env.PORT || 3000, console.log("Server up"));
